@@ -34,7 +34,7 @@
   <!-- Main Sidebar Container -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="index3.html" class="brand-link">
+    <a href="#" class="brand-link">
         <svg style="width: 30px; height:30px;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 27.07 27.07">
             <defs>
               <clipPath id="a" transform="translate(0 0)">
@@ -107,16 +107,20 @@
                 </div>
                 <!-- /.card-header -->
                 <!-- form start -->
-                <form role="form">
+                <form role="form" id="signinForm">
                   <div class="card-body">
                     <div class="form-group">
-                      <label for="exampleInputEmail1">Email address</label>
-                      <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email">
+                      <label for="emailInputSignin">Email address</label>
+                      <input type="email" class="form-control" id="emailInputSignin" placeholder="Enter email">
                     </div>
                     <div class="form-group">
-                      <label for="exampleInputPassword1">Password</label>
-                      <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+                      <label for="passwordInputSignin">Password</label>
+                      <input type="password" class="form-control" id="passwordInputSignin" placeholder="Password">
                     </div>
+                    <div class="form-group" id="signin-confirm-password" style="display: none;">
+						<label for="passwordConfirmSignin">Confirm Password </label>
+						<input type="password" class="form-control" id="passwordConfirmSignin" name="passwordConfirmSignin" pattern=".*" />
+					</div>
                   </div>
                   <!-- /.card-body -->
   
@@ -164,5 +168,10 @@
 <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
+<script src="dist/js/vendor/aws-cognito-sdk.min.js"></script>
+<script src="dist/js/vendor/amazon-cognito-identity.min.js"></script>
+<script src="dist/js/config.js"></script>
+<script src="dist/js/cognito-auth.js"></script>
+
 </body>
 </html>
