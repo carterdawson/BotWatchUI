@@ -200,7 +200,6 @@ var BotWatch = window.BotWatch || {};
     function handleSignin(event) {
         var email = $('#emailInputSignin').val();
         var password = $('#passwordInputSignin').val();
-        alert("Logging in " + email);
         event.preventDefault();
         //if I don't have userAttributes (meaning that this is a regular
         //signin attempt as opposed to a password change on signin)

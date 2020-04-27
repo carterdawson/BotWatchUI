@@ -18,6 +18,20 @@
   <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
   <!-- Google Font: Source Sans Pro -->
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+  <style>
+.red {
+	color: red;
+}
+
+.green {
+	color: green;
+}
+
+.black {
+	color: black;
+}
+  </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -106,7 +120,7 @@
     <section class="content">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">jsGrid</h3>
+          <h3 class="card-title">Watches for account <span id="accountId">Unknown</span></h3>
         </div>
         <!-- /.card-header -->
         <div class="card-body">
@@ -154,27 +168,255 @@
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
 <script src="../../dist/js/demo.js"></script>
+<script src="dist/js/vendor/aws-cognito-sdk.min.js"></script>
+<script src="dist/js/vendor/amazon-cognito-identity.min.js"></script>
+<script src="dist/js/vendor/juration.js"></script>
+<script src="dist/js/config.js"></script>
+<script src="dist/js/cognito-auth.js"></script>
 
 <script>
-  $(function () {
-    $("#jsGrid1").jsGrid({
-        height: "100%",
-        width: "100%",
+
+	
+var watches = [
+	{ "WatchId": "1", "Name": "Shaun's test watch", "TimeoutMs": 90000, "LastCheckinAt": 1585843658632, "OverdueAt": 1585843748632},
+	{ "WatchId": "2", "Name": "Shaun's second watch", "TimeoutMs": 30000, "LastCheckinAt": 1585843659632, "OverdueAt": 1585843770632},
+
+    ];
+    
+    var accountId = 2;
+    var resource = "watches";
+    var urlBase = _config.api.invokeUrl;
+    var restURL = `${urlBase}/${accountId}/${resource}`;
+
+    $("#accountId").html(accountId);
  
+    Number.prototype.pad = function(size) {
+    var s = String(this);
+    while (s.length < (size || 2)) {s = "0" + s;}
+    return s;
+}
+    function secFromMs(value) {
+        return (value/1000);
+    }
+
+    function msFromSec(value) {
+        return value * 1000;
+    }
+
+    function readableTime(time) {
+        //if the time is zero...
+        if (time == 0) {
+            //we're done... emtpy string
+            return "";
+        }
+        var now = Date.now();
+        var value = time - now;
+
+        var isNegative = false;
+        if (value < 0) {
+            isNegative = true;
+            value = -value;
+        }
+
+        var retStr = juration.stringify(secFromMs(value), {format: "micro"});
+        var color = "black";
+        //if our return string is empty...
+        if (retStr.length === 0) {
+            //then it's now
+            retStr = "now";
+        } else {
+            //else, adjust based on whether it's positive or negative
+            if (isNegative) { retStr += " ago"; color="red"} else { retStr = "in "+retStr; color="green"}
+        }
+
+        //retStr = `<color="${color}">${retStr}</color>`;
+        return {
+            str: retStr,
+            isNegative: isNegative
+        };
+
+    }
+
+    function formatTimeStyled(value, item) {
+        return formatTime(value, item, {doStyling: true})
+    }
+
+    function formatTime(value, item, args={}) {
+        var doStyling = false;
+
+        var readable = readableTime(value);
+        if (args.doStyling) { doStyling = true;}
+        //if we're supposed to do styling
+        var style = "";
+        if (doStyling) {
+            if (readable.isNegative) {
+                style = "red";
+            } else {
+                style = "green";
+            }
+        }
+        return `<div data-dostyling="${doStyling}" data-msvalue="${value}" class="${style}">${readable.str}</div>`;
+    }
+
+    function updateTimes() {
+        //for any div that has a data-msvalue attribute
+        $('div[data-msvalue]').each(function(index, elm) {
+            //set the value of this element to the new number,
+            //which is a stringified version of the number of seconds before
+            //or after now.
+            var result = readableTime($(elm).attr('data-msvalue'));
+            $(elm).text(result.str);
+            //if we're supposed to do syling on this element..
+            if ($(elm).attr('data-dostyling') === 'true') {
+                //figure out whether we want red or green
+                var val = result.isNegative ? "red" : "green";
+                //remove any existing class
+                $(elm).removeClass("red green");
+                //and add the one we want
+                $(elm).addClass(val);
+            }
+        });
+
+    }
+
+
+    var reloadDataEverySec = 10;
+    if (reloadDataEverySec > 0) {
+        window.setTimeout(reloadGrid, 1000*reloadDataEverySec);
+    }
+
+    //Handle the enter key for inserts and updates
+    //Code from: https://github.com/tabalinas/jsgrid/issues/546
+    function insert_on_enter(field) {
+        field.on("keydown", function(e) {
+            if(e.keyCode === 13) {
+                $("#jsGrid1").jsGrid("insertItem");
+                $("#jsGrid1").jsGrid("clearInsert");
+                return false;
+            }
+        });
+}
+    function update_on_enter(field) {
+        field.on("keydown", function(e) {
+            if(e.keyCode === 13) {
+                $("#jsGrid1").jsGrid("updateItem");
+                return false;
+            }
+        });    
+    }
+
+    function ourEditTemplate(value) {
+        this.editControl = $("<input>").val(value);
+        update_on_enter(this.editControl);
+        return this.editControl;
+    }
+
+    function ourInsertTemplate(value) {
+        this.insertControl = $("<input>");
+        insert_on_enter(this.editControl);
+        return this.insertControl;
+    }
+
+    function nullInsertTemplate(value) {
+        return null;
+    }
+
+
+    //TODO: figure out how to suppress this if I'm editing
+    function reloadGrid() {
+        $("#jsGrid1").jsGrid("loadData").done(function(){
+            //restore the sorting
+            var sorting = $("#jsGrid1").jsGrid("getSorting");
+            $("#jsGrid1").jsGrid("sort", sorting);
+
+            //set ourselves up to do this again
+            window.setTimeout(reloadGrid, 1000*reloadDataEverySec);
+
+        });
+
+    }
+
+    //update our times every second
+    window.setInterval(updateTimes, 1000);
+ 
+    $("#jsGrid1").jsGrid({
+        width: "100%",
+        height: "auto",
+ 
+        inserting: true,
+        editing: true,
         sorting: true,
         paging: true,
+        autoload: true,
+
+        datatype: "json",
  
-        data: db.clients,
+        //data: watches,
+
+        controller:
+        {
+            loadData: function(filter) {
+                console.log("Loading data, filter:", filter);
+                console.log("url:", restURL);
+                return $.ajax({
+                    type: "GET",
+                    url: restURL,
+                    data: filter
+                }).then(function(results) {updateTimes(); return results;});
+            },
+            
+            insertItem: function(item) {
+                return $.ajax({
+                    type: "POST",
+                    url: restURL,
+                    dataType: "json",
+                    contentType: "application/json; charset=UTF-8",
+                    data: JSON.stringify(item)
+                });
+            },
+            
+            updateItem: function(item) {
+                return $.ajax({
+                    type: "PUT",
+                    url: restURL+`/${item.WatchId}`,
+                    dataType: "json",
+                    contentType: "application/json; charset=UTF-8",
+                    data: JSON.stringify(item)
+                });
+            },
+            
+            deleteItem: function(item) {
+                return $.ajax({
+                    type: "DELETE",
+                    url: restURL+`/${item.WatchId}`,
+                    dataType: "json",
+                    contentType: "application/json; charset=UTF-8",
+                    data: JSON.stringify(item)
+                });
+            },
+        },        
  
         fields: [
-            { name: "Name", type: "text", width: 150 },
-            { name: "Age", type: "number", width: 50 },
-            { name: "Address", type: "text", width: 200 },
-            { name: "Country", type: "select", items: db.countries, valueField: "Id", textField: "Name" },
-            { name: "Married", type: "checkbox", title: "Is Married" }
+			{ name: "WatchId", title: "Id", type: "text", width: 75, editing: false, inserting: false },
+            { name: "Name", type: "text", width: 150, validate: "required", editTemplate: ourEditTemplate },
+            { name: "TimeoutMs", title: "TimeoutMs", type: "number", width: 75 },
+            { name: "SuppressAlerts", title: "No alerts", type: "checkbox", width: 75},
+			{ name: "LastCheckinAt", title: "Last checkin", type: "number",  itemTemplate:formatTime, width: 100, editing: false, inserting: false},
+			{ name: "OverdueAt", title: "Overdue", type: "number", itemTemplate: formatTimeStyled, width: 100, editing: false, inserting: false},
+            { type: "control" }
         ]
     });
-  });
+
+    BotWatch.authToken.then(function(token) {
+        //if we have a token...
+        if (token) {
+            //console.log("Auth token:", token);
+        } else {
+            console.error("No Auth token")
+        }
+
+    });
+  
 </script>
 </body>
 </html>
