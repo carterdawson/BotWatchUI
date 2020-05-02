@@ -121,11 +121,16 @@
 						<label for="passwordConfirmSignin">Confirm Password </label>
 						<input type="password" class="form-control" id="passwordConfirmSignin" name="passwordConfirmSignin" pattern=".*" />
 					</div>
+                    <div class="form-group" id="signin-verification-code" style="display: none;">
+						<label for="verificationCodeSignin">Verification Code</label>
+						<input type="text" class="form-control" id="verificationCodeSignin" placeholder="Verification Code" name="verificationCodeSignin" pattern=".*" />
+					</div>
                   </div>
                   <!-- /.card-body -->
   
                   <div class="card-footer">
                     <button type="submit" class="btn btn-primary">Submit</button>
+                    <a id="forgotPasswordLink" href="#">Forgot password...</a>
                   </div>
                 </form>
               </div>          </div>

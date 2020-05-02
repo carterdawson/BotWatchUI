@@ -4,7 +4,7 @@
 var BotWatch = window.BotWatch || {};
 
 (function scopeWrapper($) {
-    var signinUrl = 'signin.html';
+    var signinUrl = 'login.html';
 
     var poolData = {
         UserPoolId: _config.cognito.userPoolId,
@@ -129,9 +129,9 @@ var BotWatch = window.BotWatch || {};
         });
     }
 
-    var signInUserAttributes;
+    var signInSpecialData = null;
     var currentUser;
-    function signInToChangePassword(userAttributes) {
+    function signInToChangePassword(specialData) {
         //show the confirm password button
         $('#signin-confirm-password').show();
         //change the text in the submit button
@@ -139,16 +139,27 @@ var BotWatch = window.BotWatch || {};
         //clear out the password field
         $('#passwordInputSignin').val('');
         //save the user attributes
-        signInUserAttributes = userAttributes;
+        signInSpecialData = specialData;
+        signInSpecialData.isVerify = false;
     }
 
     function changePasswordToSignIn() {
         //clear the userAttributes
-        signInUserAttributes = null;
+        signInSpecialData = null;
         //change the text in the submit button
         $('#signin-submit').val('Change Password');
         //show the confirm password button
         $('#signin-confirm-password').val('').hide();
+    }
+
+    function signInToVerifyCode() {
+        var specialData = {
+        };
+
+        signInToChangePassword(specialData);
+        specialData.isVerify = true;  //This is set to false above
+        //show the verification code dialog
+        $('#signin-verification-code').show();
     }
 
     /*
@@ -189,6 +200,7 @@ var BotWatch = window.BotWatch || {};
         forgotPassword(email,
             function () {
                 alert("Check your email for the password reset key");
+                signInToVerifyCode();
             },
             function(err) {
                 console.log("Error with forgotPassword:", err);
@@ -201,9 +213,9 @@ var BotWatch = window.BotWatch || {};
         var email = $('#emailInputSignin').val();
         var password = $('#passwordInputSignin').val();
         event.preventDefault();
-        //if I don't have userAttributes (meaning that this is a regular
-        //signin attempt as opposed to a password change on signin)
-        if (signInUserAttributes == undefined) {
+        //if I don't have special data (meaning that this is a regular
+        //signin attempt as opposed to a password change on signin or verification)
+        if (signInSpecialData == undefined) {
             signin(email, password,
                 function signinSuccess() {
                     console.log('Successfully Logged In. Getting account for user:', email);
@@ -216,28 +228,52 @@ var BotWatch = window.BotWatch || {};
                 function onNewPasswordRequired(userAttributes, requiredAttributes) {
                     //let the user know what's happening
                     delete userAttributes.email_verified;
+                    signInSpecialData = {
+                        userAttributes: userAttributes
+                    }
                     alert("You need to change your password.  Please create a new password and submit.");
-                    signInToChangePassword(userAttributes);
+                    signInToChangePassword(signInSpecialData);
                 }
             );
-    
         } else {
             //if the passwords match...
             var email = $('#emailInputSignin').val();
             var password = $('#passwordInputSignin').val();
             var passwordMatch = $('#passwordConfirmSignin').val();
-            console.log("About to complete, attributes:", signInUserAttributes);
-            currentUser.completeNewPasswordChallenge(password, signInUserAttributes, {
-                onSuccess: function(result) {
-                    console.log("New password completed");
-                    postSignInNavigate(email);
-                },
-                onFailure: function(err) {
-                    console.log(err);
-                    alert("New password setting failed... see console for details.");
-                    changePasswordToSignIn();
+            console.log("About to complete, specialData:", signInSpecialData);
+            if (password === passwordMatch) {
+                //if this is a verification request...
+                if (signInSpecialData.isVerify) {
+                    var code = $('#verificationCodeSignin').val();
+                    confirmPassword(email, password, code,
+                        function verifySuccess(result) {
+                            console.log('call result: ' + result);
+                            console.log('Successfully verified');
+                            alert('Verification successful.  You can now login with your new password.');
+                            location.reload();
+                            //window.location.href = signinUrl;
+                        },
+                        function verifyError(err) {
+                            alert(err);
+                        }
+                    );
+                //otherwise, it's a password change on login
+                } else {
+                    currentUser.completeNewPasswordChallenge(password, signInSpecialData.userAttributes, {
+                        onSuccess: function(result) {
+                            console.log("New password completed");
+                            postSignInNavigate(email);
+                        },
+                        onFailure: function(err) {
+                            console.log(err);
+                            alert("New password setting failed... see console for details.");
+                            changePasswordToSignIn();
+                        }
+                    });
                 }
-            });
+            } else {
+                alert("Passwords do not match");
+            }
         }
     }
 

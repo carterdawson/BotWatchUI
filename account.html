@@ -82,13 +82,13 @@
           <li class="nav-item has-treeview menu-open">
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="account.html" class="nav-link">
+                <a href="account.html" class="nav-link active">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Account</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link active">
+                <a href="watchlist.html" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Watches</p>
                 </a>
@@ -109,12 +109,12 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1 class="m-0 text-dark">Watches</h1>
+            <h1 class="m-0 text-dark">Account <span id="accountId">Unknown</span></h1>
           </div><!-- /.col -->
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item">Home</li>
-              <li class="breadcrumb-item active">Watches</li>
+              <li class="breadcrumb-item active">Account</li>
             </ol>
           </div><!-- /.col -->
         </div><!-- /.row -->
@@ -124,16 +124,33 @@
 
     <!-- Main content -->
     <section class="content">
-      <div class="card">
+      <div class="card card-primary">
         <div class="card-header">
-          <h3 class="card-title">Watches for account <span id="accountId">Unknown</span></h3>
+          <h3 class="card-title">Change Password</h3>
         </div>
         <!-- /.card-header -->
-        <div class="card-body">
-          <div id="jsGrid1"></div>
-        </div>
-        <!-- /.card-body -->
-      </div>
+        <form role="form" id="changePasswordForm">
+          <div class="card-body">
+            <div class="form-group">
+              <label for="emailInputChangePassword">Email address</label>
+              <input type="email" class="form-control" id="emailInputChangePassword" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+              <label for="passwordInputChangePassword">Password</label>
+              <input type="password" class="form-control" id="passwordInputChangePassword" placeholder="Password">
+            </div>
+            <div class="form-group" id="change-password-confirm-password">
+              <label for="passwordConfirmChangePassword">Confirm Password </label>
+              <input type="password" class="form-control" id="passwordConfirmChangePassword" name="passwordConfirmChangePassword" pattern=".*" placeholder="Password again" />
+            </div>
+          </div>
+          <!-- /.card-body -->
+
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+</div>
       <!-- /.card -->
 
     </section>
