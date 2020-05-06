@@ -179,6 +179,7 @@
 <script src="dist/js/vendor/juration.js"></script>
 <script src="dist/js/config.js"></script>
 <script src="dist/js/cognito-auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
 
 <script>
 
@@ -189,10 +190,16 @@ var watches = [
 
     ];
     
-    var accountId = 2;
+    var accountId = Cookies.get("accountId");
     var resource = "watches";
     var urlBase = _config.api.invokeUrl;
     var restURL = `${urlBase}/${accountId}/${resource}`;
+
+    //if there is no accountId cookie...
+    if (accountId == null) {
+      alert("No account cookie found.  Please login.");
+      window.location.href = "login.html";
+    }
 
     $("#accountId").html(accountId);
  

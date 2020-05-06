@@ -184,6 +184,7 @@ var BotWatch = window.BotWatch || {};
             if (response.AccountId == undefined) {
                 alert(`User ${email} logged in, but no account found.  Please contact Robiquity Support.`);
             } else {
+                Cookies.set("accountId", response.AccountId);
                 window.location.href = 'watchlist.html';
             }
 
