@@ -362,7 +362,13 @@ var watches = [
                     type: "GET",
                     url: restURL,
                     data: filter
-                }).then(function(results) {updateTimes(); return results;});
+                }).then(function(results) {
+                  updateTimes(); 
+                  return results;
+                }).catch(function(err) { 
+                  console.log(err);
+                });
+                //TODO: handle the failure condition here, like if the REST API does not exist
             },
             
             insertItem: function(item) {
