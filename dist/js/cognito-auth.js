@@ -182,7 +182,7 @@ var BotWatch = window.BotWatch || {};
             console.log("Got response", response);
             //if there isn't an AccountId on this user...
             if (response.AccountId == undefined) {
-                alert(`User ${email} logged in, but no account found.  Please contact Robiquity Support.`);
+                alert(`User ${email} logged in, but no account found.  Please contact Automation Watchdog Support.`);
             } else {
                 Cookies.set("accountId", response.AccountId);
                 window.location.href = 'watchlist.html';
